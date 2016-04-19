@@ -1,0 +1,99 @@
+<!--Z5-3. Pronaći podatke za RH koji su grupirani po županijama. Podatke povezati s kartom te
+omogućiti prikaz tih podataka prilikom odabira odgovarajuće županije na karti. Potrebno je
+i izraditi skalu koju će se koristiti kod odabira boje svake od županija.-->
+
+<!doctype html>
+<html lang="en">
+<head>
+	
+	<style>
+	div.tooltip {	
+    position: absolute;			
+    text-align: center;	
+    width: 260px;					
+    height: 83px;	
+    padding: 3px;	
+    font: 12px sans-serif;		
+    background: #AA6839;	
+    border: 0px;		
+    border-radius: 8px;			
+    pointer-events: none;
+	color:white;
+}
+	</style>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+	<script src="https://d3js.org/topojson.v1.min.js"></script>
+</head>
+<body>
+  <script>
+	var width = 960;
+	var height = 700;
+	function boje_moja_skala(n) {
+  var boje_m = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac"];
+  return boje_m[n % boje_m.length];
+  }
+	
+	var projection = d3.geo.mercator()
+		.center([0, 10])
+		.scale(6000)
+		.translate([17600, 4500])
+		.rotate([-180, 0]);
+		
+	var path = d3.geo.path()
+		.projection(projection);
+		
+	var svg = d3.select("body").append("svg")
+		.attr("width", width)
+		.attr("height", height)
+		.style("background", "white");
+	
+	var div = d3.select("body").append("div")	
+    .attr("class", "tooltip")				
+    .style("opacity", 0);
+		
+	d3.json("cro_regv3.json", function(error, cro) {
+	  var data = topojson.feature(cro, cro.objects.layer1);
+	  var states = svg.selectAll("path.county")
+		.data(data.features)
+		.enter()
+		.append("path")
+		.attr("class", "county")
+		.attr("id", function(d) { return d.id; })
+		.attr("d", path)
+		.style("fill", function(d,i) { return boje_moja_skala(i); })
+		.style("stroke", "gray")
+		.style("stroke-width", 1)
+		.style("stroke-opacity", 1)
+		.on("click", function(d) {
+			var active = d.active ? false:true,
+			newOpacity = active ? 0.95:0;
+			console.log(active);
+			var name = d.properties.gns_name;
+			//var type = d.properties.type;
+			var isoA = d.properties.iso_a2;
+			var admin = d.properties.adm1_code;
+			var engname = d.properties.name_alt;
+			var engtype = d.properties.type_en;
+			var country = d.properties.admin;
+			var codeH = d.properties.code_hasc;
+			var postal = d.properties.postal;
+			var latitude = d.properties.latitude;
+			var longitude = d.properties.longitude;
+			var geunit = d.properties.geounit;
+			console.log("Naziv: " + name + " " + isoA + "<br>" + "Admin: " + admin + "<br>" + "Name: " + engname + " " + engtype + " " +", " + country + "<br>" + "Postanski broj: " + postal + "<br>" + "Longitude: " + longitude + "<br>" + "Latitude: " + latitude);
+			div .transition()
+				.duration(200)
+				.style("opacity", newOpacity);
+			div .html("Naziv: " + name + " " + isoA + "<br>" + "Admin: " + admin + "<br>" + "Name: " + engname + " " + engtype +", " + country + "<br>" + "Postal : " + postal + "<br>" + "Longitude: " + longitude + "<br>" + "Latitude: " + latitude)
+				.style("left", (d3.event.pageX) + "px")     
+                .style("top", (d3.event.pageY - 28) + "px");  
+				d.active = active;
+				console.log(active);
+				});
+		
+				
+	});	
+	
+    </script>
+</body>
+</html>
